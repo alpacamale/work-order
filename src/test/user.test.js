@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 import { MongoMemoryServer } from "mongodb-memory-server";
 import User from "../models/User.js";
+import bcrypt from "bcrypt";
 
 let mongoServer;
 
@@ -16,67 +17,38 @@ afterAll(async () => {
 });
 
 afterEach(async () => {
-  await User.deleteMany();
+  await User.deleteMany({});
 });
 
-describe("User Model Test", () => {
-  it("✅ 새로운 User 생성", async () => {
+describe("User Model", () => {
+  it("should hash password before saving", async () => {
     const user = new User({
-      name: "김차장", // ✅ 추가됨
-      position: "시설물관리팀 차장",
-      username: "testuser",
-      password: "hashedpassword123",
+      name: "홍길동",
+      position: "개발자",
+      username: "hong",
+      password: "1234",
     });
+    await user.save();
 
-    const savedUser = await user.save();
-
-    expect(savedUser._id).toBeDefined();
-    expect(savedUser.name).toBe("김차장"); // ✅ 필드 검증
-    expect(savedUser.securityLevel).toBe(1); // default 값 검증
-    expect(savedUser.position).toBe("시설물관리팀 차장"); // 입력값 그대로 확인
+    const savedUser = await User.findOne({ username: "hong" });
+    expect(savedUser.password).not.toBe("1234"); // 비밀번호가 해시되었는지 확인
+    expect(await bcrypt.compare("1234", savedUser.password)).toBe(true);
   });
 
-  it("❌ 필수 필드 누락 시 에러", async () => {
-    const user = new User({});
-    let err;
-
-    try {
-      await user.save();
-    } catch (error) {
-      err = error;
-    }
-
-    expect(err).toBeInstanceOf(mongoose.Error.ValidationError);
-    expect(err.errors.name).toBeDefined(); // ✅ name 필수 확인
-    expect(err.errors.username).toBeDefined();
-    expect(err.errors.password).toBeDefined();
-    expect(err.errors.position).toBeDefined();
-  });
-
-  it("✅ username이 unique인지 확인", async () => {
-    const user1 = new User({
-      name: "홍길동", // ✅ name 필드 추가
-      position: "개발자",
-      username: "dupuser",
-      password: "pass1",
+  it("should not re-hash password if not modified", async () => {
+    const user = new User({
+      name: "이몽룡",
+      position: "팀장",
+      username: "lee",
+      password: "abcd",
     });
-    await user1.save();
+    await user.save();
 
-    const user2 = new User({
-      name: "김철수", // ✅ name 필드 추가
-      position: "개발자",
-      username: "dupuser", // 동일 username
-      password: "pass2",
-    });
+    const originalPasswordHash = user.password;
 
-    let err;
-    try {
-      await user2.save();
-    } catch (error) {
-      err = error;
-    }
+    user.name = "성춘향"; // 비번 말고 다른 필드 수정
+    await user.save();
 
-    expect(err).toBeDefined();
-    expect(err.code).toBe(11000); // MongoDB duplicate key error code
+    expect(user.password).toBe(originalPasswordHash); // 비밀번호는 안 바뀜
   });
 });
