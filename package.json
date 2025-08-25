@@ -1,0 +1,36 @@
+{
+  "name": "work-order",
+  "version": "1.0.0",
+  "description": "웹 기반 모바일 작업지시 / 관리 시스템",
+  "homepage": "https://github.com/alpacamale/work-order#readme",
+  "bugs": {
+    "url": "https://github.com/alpacamale/work-order/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/alpacamale/work-order.git"
+  },
+  "license": "ISC",
+  "author": "AlpacaMale <alpaca9100@gmail.com>",
+  "type": "commonjs",
+  "main": "index.js",
+  "scripts": {
+    "dev": "nodemon --exec babel-node src/init.js",
+    "test": "jest --runInBand"
+  },
+  "dependencies": {
+    "dotenv": "^17.2.1",
+    "express": "^5.1.0",
+    "mongoose": "^8.18.0",
+    "morgan": "^1.10.1"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.28.3",
+    "@babel/node": "^7.28.0",
+    "@babel/preset-env": "^7.28.3",
+    "@types/jest": "^30.0.0",
+    "jest": "^29.7.0",
+    "mongodb-memory-server": "^10.2.0",
+    "nodemon": "^3.1.10"
+  }
+}

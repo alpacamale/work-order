@@ -1,0 +1,18 @@
+import mongoose from "mongoose";
+const { Schema, model } = mongoose;
+
+const userSchema = new Schema(
+  {
+    name: { type: String, required: true },
+    position: { type: String, required: true }, // 직급
+    profileImage: { type: String }, // 프로필 사진 URL (S3 등)
+    securityLevel: { type: Number, default: 1 }, // 보안 등급
+    username: { type: String, required: true, unique: true }, // 아이디
+    password: { type: String, required: true }, // 비밀번호 (해시 저장)
+    posts: [{ type: Schema.Types.ObjectId, ref: "Post" }], // 사용자가 쓴 글
+  },
+  { timestamps: true }
+);
+
+const User = model("User", userSchema);
+export default User;
