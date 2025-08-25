@@ -18,8 +18,7 @@ const postSchema = new Schema(
     },
     content: { type: String }, // 내용
     date: { type: Date, default: Date.now }, // 날짜
-    mentionsWorkers: [{ type: Schema.Types.ObjectId, ref: "User" }], // 작업자 멘션
-    mentionsRelated: [{ type: Schema.Types.ObjectId, ref: "User" }], // 관계자 멘션
+    mentions: [{ type: Schema.Types.ObjectId, ref: "User" }], // 관계자 멘션
   },
   { timestamps: true }
 );
