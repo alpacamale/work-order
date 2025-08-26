@@ -1,10 +1,9 @@
 import Comment from "../../models/Comment.js";
-import Post from "../../models/Post.js";
 
 // 특정 게시글의 댓글 조회
 export const getComments = async (req, res) => {
   try {
-    const comments = await Comment.find({ post: req.params.postId })
+    const comments = await Comment.find({ post: req.params.id })
       .populate("author")
       .populate("mentions");
     res.json(comments);
@@ -16,29 +15,43 @@ export const getComments = async (req, res) => {
 // 댓글 생성
 export const createComment = async (req, res) => {
   try {
-    const comment = new Comment({ ...req.body, post: req.params.postId });
-    await comment.save();
+    const { content } = req.body;
+    const { id } = req.params;
 
-    // Post에 댓글 연결 (필요하다면 Post 모델에 comments 필드 추가)
-    await Post.findByIdAndUpdate(req.params.postId, {
-      $push: { comments: comment._id },
+    const comment = new Comment({
+      content,
+      post: id,
+      author: req.user.id, // 로그인된 유저 ID
     });
 
+    await comment.save();
     res.status(201).json(comment);
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    res.status(500).json({ message: "댓글 작성 실패", error: err.message });
   }
 };
 
 // 댓글 수정
 export const updateComment = async (req, res) => {
   try {
-    const comment = await Comment.findByIdAndUpdate(req.params.id, req.body, {
-      new: true,
-    });
-    if (!comment) return res.status(404).json({ error: "Comment not found" });
+    const comment = await Comment.findById(req.params.id);
+    if (!comment) {
+      return res.status(404).json({ error: "Comment not found" });
+    }
+
+    if (comment.author.toString() !== req.user.id) {
+      return res.status(403).json({ message: "수정 권한 없음" });
+    }
+
+    // 수정 가능 필드만 반영 (보안상 전체 req.body 적용은 위험)
+    if (req.body.content) {
+      comment.content = req.body.content;
+    }
+
+    await comment.save();
     res.json(comment);
   } catch (err) {
+    console.error("updateComment error:", err);
     res.status(400).json({ error: err.message });
   }
 };
@@ -46,10 +59,19 @@ export const updateComment = async (req, res) => {
 // 댓글 삭제
 export const deleteComment = async (req, res) => {
   try {
-    const comment = await Comment.findByIdAndDelete(req.params.id);
-    if (!comment) return res.status(404).json({ error: "Comment not found" });
-    res.status(204).end();
+    const comment = await Comment.findById(req.params.id);
+    if (!comment) {
+      return res.status(404).json({ error: "Comment not found" });
+    }
+
+    if (comment.author.toString() !== req.user.id) {
+      return res.status(403).json({ message: "삭제 권한 없음" });
+    }
+
+    await comment.deleteOne(); // ✅ 권한 확인 후 삭제
+    res.status(200).json({ message: "댓글 삭제 성공" });
   } catch (err) {
+    console.error("deleteComment error:", err);
     res.status(500).json({ error: err.message });
   }
 };
