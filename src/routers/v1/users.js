@@ -6,7 +6,7 @@ import {
   createUser,
   updateUser,
   deleteUser,
-} from "../../controllers/v1/userController";
+} from "../../controllers/userController";
 import { authMiddleware } from "../../middleware/authMiddleware";
 
 // mapping route to function

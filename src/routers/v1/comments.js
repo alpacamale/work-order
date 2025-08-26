@@ -3,7 +3,7 @@ import mongoose from "mongoose";
 import {
   updateComment,
   deleteComment,
-} from "../../controllers/v1/commentController";
+} from "../../controllers/commentController";
 
 // mapping route to function
 const router = express.Router();

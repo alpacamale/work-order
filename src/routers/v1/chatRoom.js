@@ -5,11 +5,11 @@ import {
   getRoom,
   updateRoom,
   deleteRoom,
-} from "../../controllers/v1/chatRoomController.js";
+} from "../../controllers/chatRoomController.js";
 import {
   getMessages,
   createMessage,
-} from "../../controllers/v1/messageController.js";
+} from "../../controllers/messageController.js";
 import mongoose from "mongoose";
 
 const router = express.Router();

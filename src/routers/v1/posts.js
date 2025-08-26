@@ -7,11 +7,11 @@ import {
   updatePost,
   deletePost,
   updatePostCategory,
-} from "../../controllers/v1/postController";
+} from "../../controllers/postController";
 import {
   getComments,
   createComment,
-} from "../../controllers/v1/commentController";
+} from "../../controllers/commentController";
 
 // mapping route to function
 const router = express.Router();
