@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import User from "../models/User.js";
 const { Schema, model } = mongoose;
 
 const postSchema = new Schema(
@@ -22,6 +23,36 @@ const postSchema = new Schema(
   },
   { timestamps: true }
 );
+
+// pre-save 훅: content 안의 멘션 자동 추출
+postSchema.pre("save", async function (next) {
+  try {
+    if (!this.content) {
+      this.mentions = [];
+      return next();
+    }
+
+    const mentionRegex = /@([a-zA-Z0-9_.-]+)/g;
+    const usernames = [];
+    let match;
+
+    while ((match = mentionRegex.exec(this.content)) !== null) {
+      usernames.push(match[1]);
+    }
+
+    if (usernames.length === 0) {
+      this.mentions = [];
+      return next();
+    }
+
+    const users = await User.find({ username: { $in: usernames } });
+    this.mentions = users.map((u) => u._id);
+
+    next();
+  } catch (err) {
+    next(err);
+  }
+});
 
 const Post = model("Post", postSchema);
 export default Post;
