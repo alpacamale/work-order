@@ -82,3 +82,33 @@ export const deletePost = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
+
+export const updatePostCategory = async (req, res) => {
+  try {
+    const post = await Post.findById(req.params.id);
+    if (!post) {
+      return res.status(404).json({ error: "Post not found" });
+    }
+
+    const userId = req.user.id;
+    const isAuthor = post.author.toString() === userId;
+    const isMentioned = post.mentions.some((m) => m.toString() === userId);
+
+    if (!isAuthor && !isMentioned) {
+      return res.status(403).json({ message: "수정 권한 없음" });
+    }
+
+    const { category } = req.body;
+    const allowed = ["공지사항", "새로운 작업", "진행중", "완료"];
+    if (!allowed.includes(category)) {
+      return res.status(422).json({ error: "유효하지 않은 카테고리 값입니다" });
+    }
+
+    post.category = req.body.category;
+    await post.save();
+    res.json({ category: post.category });
+  } catch (err) {
+    console.error("updatePostCategory error:", err);
+    res.status(500).json({ error: err.message });
+  }
+};

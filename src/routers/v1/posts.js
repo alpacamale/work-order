@@ -6,6 +6,7 @@ import {
   createPost,
   updatePost,
   deletePost,
+  updatePostCategory,
 } from "../../controllers/v1/postController";
 import {
   getComments,
@@ -25,6 +26,7 @@ router.param("id", (req, res, next, id) => {
 });
 
 router.route("/:id/comments").get(getComments).post(createComment);
+router.patch("/:id/category", updatePostCategory);
 router.route("/:id").get(getPost).put(updatePost).delete(deletePost);
 
 // export file for import in other files
