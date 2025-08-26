@@ -19,8 +19,8 @@ export const getPost = async ({ id }) => {
   return post;
 };
 
-export const updatePost = async ({ paramId, userId, data }) => {
-  const post = await Post.findById(paramId);
+export const updatePost = async ({ postId, userId, data }) => {
+  const post = await Post.findById(postId);
   if (!post) throw new AppError("Post not found", 404);
 
   // 권한 확인
@@ -34,8 +34,8 @@ export const updatePost = async ({ paramId, userId, data }) => {
   return await post.save();
 };
 
-export const deletePost = async ({ paramId, userId }) => {
-  const post = await Post.findById(paramId);
+export const deletePost = async ({ postId, userId }) => {
+  const post = await Post.findById(postId);
   if (!post) throw new AppError("Post not found", 404);
 
   // 권한 확인
@@ -45,8 +45,8 @@ export const deletePost = async ({ paramId, userId }) => {
   return { success: true, message: "Post deleted" };
 };
 
-export const updatePostCategory = async ({ paramId, userId, category }) => {
-  const post = await Post.findById(paramId);
+export const updatePostCategory = async ({ postId, userId, category }) => {
+  const post = await Post.findById(postId);
   if (!post) throw new AppError("Post not found", 404);
 
   // 권한 확인

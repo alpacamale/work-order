@@ -50,7 +50,7 @@ export const getPost = async (req, res) => {
 export const updatePost = async (req, res) => {
   try {
     const updated = await postService.updatePost({
-      paramId: req.params.id,
+      postId: req.params.id,
       userId: req.user.id,
       data: req.body,
     });
@@ -67,7 +67,7 @@ export const updatePost = async (req, res) => {
 export const deletePost = async (req, res) => {
   try {
     const result = await postService.deletePost({
-      paramId: req.params.id,
+      postId: req.params.id,
       userId: req.user.id,
     }); // ✅ 권한 확인 후 삭제
     res.json(result);
@@ -79,10 +79,11 @@ export const deletePost = async (req, res) => {
   }
 };
 
+// 카테고리 업데이트
 export const updatePostCategory = async (req, res) => {
   try {
     const updated = await postService.updatePostCategory({
-      paramId: req.params.id,
+      postId: req.params.id,
       userId: req.user.id,
       category: req.body.category,
     });
@@ -91,7 +92,7 @@ export const updatePostCategory = async (req, res) => {
     if (err instanceof AppError) {
       return res.status(err.statusCode).json({ error: err.message });
     }
-    console.error("updatePostCategory error:", err);
+    console.log("erorororor:", err.message);
     res.status(500).json({ error: err.message });
   }
 };
