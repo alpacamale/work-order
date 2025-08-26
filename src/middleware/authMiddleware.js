@@ -10,6 +10,6 @@ export const authMiddleware = (req, res, next) => {
     req.user = decoded; // { id: user._id, iat, exp }
     next();
   } catch (err) {
-    res.status(401).json({ message: "유효하지 않은 토큰입니다." });
+    return res.status(401).json({ message: "유효하지 않은 토큰입니다." });
   }
 };
