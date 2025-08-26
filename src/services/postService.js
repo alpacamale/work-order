@@ -2,6 +2,9 @@ import Post from "../models/Post.js";
 import AppError from "../utils/AppError.js";
 
 export const createPost = async ({ title, content, category, authorId }) => {
+  if (!title) throw new AppError("제목은 필수입니다.", 400);
+  if (!category) throw new AppError("카테고리는 필수입니다.", 400);
+  if (!authorId) throw new AppError("작성자 정보가 없습니다.", 401);
   const post = new Post({ title, content, category, author: authorId });
   return await post.save();
 };
