@@ -1,7 +1,6 @@
 import express from "express";
+import mongoose from "mongoose";
 import {
-  getComments,
-  createComment,
   updateComment,
   deleteComment,
 } from "../../controllers/v1/commentController";
@@ -13,9 +12,9 @@ router.param("id", (req, res, next, id) => {
   if (!mongoose.Types.ObjectId.isValid(id)) {
     return res.status(400).json({ error: "Invalid ObjectId" });
   }
+  next();
 });
 
-router.route("/").get(getComments).post(createComment);
 router.route("/:id").put(updateComment).delete(deleteComment);
 
 // export file for import in other files
