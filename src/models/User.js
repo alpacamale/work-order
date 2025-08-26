@@ -10,10 +10,16 @@ const userSchema = new Schema(
     securityLevel: { type: Number, default: 1 }, // 보안 등급
     username: { type: String, required: true, unique: true }, // 아이디
     password: { type: String, required: true }, // 비밀번호 (해시 저장)
-    posts: [{ type: Schema.Types.ObjectId, ref: "Post" }], // 사용자가 쓴 글
   },
   { timestamps: true }
 );
+
+userSchema.pre("save", async function (next) {
+  if (this.isModified("password")) {
+    this.password = await bcrypt.hash(this.password, 5);
+  }
+  next();
+});
 
 const User = model("User", userSchema);
 export default User;
