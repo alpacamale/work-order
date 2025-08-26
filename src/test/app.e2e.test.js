@@ -217,4 +217,46 @@ describe("E2E: Users + Auth + Posts + Comments", () => {
       .set("Authorization", `Bearer ${tokenUser1}`);
     expect(res.statusCode).toBe(200);
   });
+  // -------------------------
+  // Post Category Update
+  // -------------------------
+  it("✅ 작성자가 카테고리 수정 가능", async () => {
+    const patchRes = await request(app)
+      .patch(`/v1/posts/${postId}/category`)
+      .set("Authorization", `Bearer ${tokenUser1}`) // 작성자
+      .send({ category: "새로운 작업" });
+
+    expect(patchRes.statusCode).toBe(200);
+    expect(patchRes.body.category).toBe("새로운 작업");
+  });
+
+  it("✅ 멘션된 사용자가 카테고리 수정 가능", async () => {
+    const patchRes = await request(app)
+      .patch(`/v1/posts/${postId}/category`)
+      .set("Authorization", `Bearer ${tokenUser2}`) // 멘션된 유저
+      .send({ category: "진행중" });
+
+    expect(patchRes.statusCode).toBe(200);
+    expect(patchRes.body.category).toBe("진행중");
+  });
+
+  it("❌ 멘션되지 않은 사용자는 403 Forbidden", async () => {
+    const patchRes = await request(app)
+      .patch(`/v1/posts/${postId}/category`)
+      .set("Authorization", `Bearer ${tokenStranger}`) // 제3자
+      .send({ category: "완료" });
+
+    expect(patchRes.statusCode).toBe(403);
+    expect(patchRes.body.message).toBe("수정 권한 없음");
+  });
+
+  it("❌ 잘못된 category 값이면 422 Unprocessable Entity", async () => {
+    const patchRes = await request(app)
+      .patch(`/v1/posts/${postId}/category`)
+      .set("Authorization", `Bearer ${tokenUser1}`)
+      .send({ category: "엉터리값" });
+
+    expect(patchRes.statusCode).toBe(422);
+    expect(patchRes.body.error).toBe("유효하지 않은 카테고리 값입니다");
+  });
 });
