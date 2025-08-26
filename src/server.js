@@ -8,6 +8,7 @@ import v1AuthRouter from "./routers/v1/auth";
 import v1ChatRoomRouter from "./routers/v1/chatRoom";
 import v1MessageRouter from "./routers/v1/message";
 import { authMiddleware } from "./middleware/authMiddleware";
+import AppError from "./utils/AppError";
 
 const app = express();
 
@@ -27,4 +28,20 @@ app.use("/v1/comments", v1CommentRouter);
 app.use("/v1/chat-rooms", v1ChatRoomRouter);
 app.use("/v1/messages", v1MessageRouter);
 
+// error logging
+app.use((err, req, res, next) => {
+  console.error("❌ Global Error:", {
+    method: req.method,
+    url: req.originalUrl,
+    name: err.name,
+    message: err.message,
+    stack: err.stack,
+  });
+
+  if (err instanceof AppError) {
+    return res.status(err.statusCode).json({ error: err.message });
+  }
+
+  res.status(500).json({ error: "Internal Server Error" });
+});
 export default app;
