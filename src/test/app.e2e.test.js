@@ -365,7 +365,7 @@ describe("E2E: Users + Auth + Posts + Comments + ChatRooms + Messages", () => {
     const res = await request(app)
       .delete(`/v1/chat-rooms/${roomId}`)
       .set("Authorization", `Bearer ${tokenUser1}`);
-    expect(res.statusCode).toBe(204);
+    expect(res.statusCode).toBe(200);
   });
 
   it("❌ 삭제된 ChatRoom 조회 시 404", async () => {
