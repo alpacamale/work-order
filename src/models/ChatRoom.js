@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import User from "../models/User.js";
+import User from "./User.js";
 const { Schema, model } = mongoose;
 
 const chatRoomSchema = new Schema(

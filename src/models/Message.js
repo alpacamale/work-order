@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
-import ChatRoom from "../models/ChatRoom.js";
-import User from "../models/User.js";
+import ChatRoom from "./ChatRoom.js";
+import User from "./User.js";
 const { Schema, model } = mongoose;
 
 const messageSchema = new Schema({
@@ -60,5 +60,5 @@ messageSchema.pre("save", async function (next) {
   }
 });
 
-const Message = model("Message", chatRoomSchema);
+const Message = model("Message", messageSchema);
 export default Message;
