@@ -4,7 +4,7 @@ import AppError from "../utils/AppError.js";
 
 export const createUser = async ({ username, password, name, position }) => {
   const user = new User({ username, password, name, position });
-  return user.save();
+  return await user.save();
 };
 
 export const getUsers = async () => {
