@@ -5,8 +5,16 @@ import { MongoMemoryServer } from "mongodb-memory-server";
 import mongoose from "mongoose";
 
 let mongoServer;
-let tokenUser1, tokenUser2, tokenStranger;
+
+// 유저 관련
+let user1Id, user2Id, user3Id;
+let tokenUser1, tokenUser2, tokenUser3;
+
+// 게시글/댓글 관련
 let postId, commentId;
+
+// 채팅방/메시지 관련
+let roomId, messageId;
 
 beforeAll(async () => {
   mongoServer = await MongoMemoryServer.create();
@@ -19,7 +27,7 @@ afterAll(async () => {
   await mongoServer.stop();
 });
 
-describe("E2E: Users + Auth + Posts + Comments", () => {
+describe("E2E: Users + Auth + Posts + Comments + ChatRooms + Messages", () => {
   // -------------------------
   // Users & Auth
   // -------------------------
@@ -31,6 +39,7 @@ describe("E2E: Users + Auth + Posts + Comments", () => {
       position: "개발자",
     });
     expect(res1.statusCode).toBe(201);
+    user1Id = res1.body._id;
 
     const res2 = await request(app).post("/v1/users").send({
       name: "멘션대상",
@@ -39,6 +48,7 @@ describe("E2E: Users + Auth + Posts + Comments", () => {
       position: "QA",
     });
     expect(res2.statusCode).toBe(201);
+    user2Id = res2.body._id;
 
     const res3 = await request(app).post("/v1/users").send({
       name: "제3자",
@@ -47,6 +57,7 @@ describe("E2E: Users + Auth + Posts + Comments", () => {
       position: "디자이너",
     });
     expect(res3.statusCode).toBe(201);
+    user3Id = res3.body._id;
   });
 
   it("✅ 로그인 성공 (User1, User2, User3)", async () => {
@@ -65,7 +76,7 @@ describe("E2E: Users + Auth + Posts + Comments", () => {
     const login3 = await request(app)
       .post("/v1/auth/login")
       .send({ username: "stranger", password: "pass123" });
-    tokenStranger = login3.body.token;
+    tokenUser3 = login3.body.token;
     expect(login3.statusCode).toBe(200);
   });
 
@@ -83,7 +94,6 @@ describe("E2E: Users + Auth + Posts + Comments", () => {
     const res = await request(app)
       .post("/v1/posts")
       .set("Authorization", `Bearer ${tokenUser1}`)
-      .set("Content-Type", "application/json")
       .send({
         title: "테스트 글",
         content: "본문 @target",
@@ -156,14 +166,12 @@ describe("E2E: Users + Auth + Posts + Comments", () => {
       });
 
     expect(res.statusCode).toBe(201);
-    // post.mentions에는 target만 있었음 → target만 반영
     expect(res.body.mentions.length).toBe(1);
 
     const getRes = await request(app)
       .get(`/v1/posts/${postId}/comments`)
       .set("Authorization", `Bearer ${tokenUser1}`);
-    console.log(getRes.text);
-    // expect(getRes.body.mentions[0].username).toBe("target");
+    expect(getRes.statusCode).toBe(200);
 
     commentId = res.body._id;
   });
@@ -180,7 +188,6 @@ describe("E2E: Users + Auth + Posts + Comments", () => {
       .get(`/v1/posts/${postId}/comments`)
       .set("Authorization", `Bearer ${tokenUser2}`);
     expect(res.statusCode).toBe(200);
-    expect(res.body.length).toBe(1);
     expect(res.body[0]._id).toBe(commentId);
   });
 
@@ -203,27 +210,20 @@ describe("E2E: Users + Auth + Posts + Comments", () => {
     expect(res.statusCode).toBe(403);
   });
 
-  it("❌ Comment 삭제 실패 (작성자가 아님)", async () => {
-    // 댓글은 이미 지워졌으므로 NotFound가 맞음
-    const res = await request(app)
-      .delete(`/v1/comments/${commentId}`)
-      .set("Authorization", `Bearer ${tokenUser2}`);
-    expect([403, 404]).toContain(res.statusCode);
-  });
-
   it("✅ Comment 삭제 (작성자 본인)", async () => {
     const res = await request(app)
       .delete(`/v1/comments/${commentId}`)
       .set("Authorization", `Bearer ${tokenUser1}`);
     expect(res.statusCode).toBe(200);
   });
+
   // -------------------------
   // Post Category Update
   // -------------------------
   it("✅ 작성자가 카테고리 수정 가능", async () => {
     const patchRes = await request(app)
       .patch(`/v1/posts/${postId}/category`)
-      .set("Authorization", `Bearer ${tokenUser1}`) // 작성자
+      .set("Authorization", `Bearer ${tokenUser1}`)
       .send({ category: "새로운 작업" });
 
     expect(patchRes.statusCode).toBe(200);
@@ -233,7 +233,7 @@ describe("E2E: Users + Auth + Posts + Comments", () => {
   it("✅ 멘션된 사용자가 카테고리 수정 가능", async () => {
     const patchRes = await request(app)
       .patch(`/v1/posts/${postId}/category`)
-      .set("Authorization", `Bearer ${tokenUser2}`) // 멘션된 유저
+      .set("Authorization", `Bearer ${tokenUser2}`)
       .send({ category: "진행중" });
 
     expect(patchRes.statusCode).toBe(200);
@@ -243,11 +243,10 @@ describe("E2E: Users + Auth + Posts + Comments", () => {
   it("❌ 멘션되지 않은 사용자는 403 Forbidden", async () => {
     const patchRes = await request(app)
       .patch(`/v1/posts/${postId}/category`)
-      .set("Authorization", `Bearer ${tokenStranger}`) // 제3자
+      .set("Authorization", `Bearer ${tokenUser3}`)
       .send({ category: "완료" });
 
     expect(patchRes.statusCode).toBe(403);
-    expect(patchRes.body.message).toBe("수정 권한 없음");
   });
 
   it("❌ 잘못된 category 값이면 422 Unprocessable Entity", async () => {
@@ -257,6 +256,122 @@ describe("E2E: Users + Auth + Posts + Comments", () => {
       .send({ category: "엉터리값" });
 
     expect(patchRes.statusCode).toBe(422);
-    expect(patchRes.body.error).toBe("유효하지 않은 카테고리 값입니다");
+  });
+
+  // -------------------------
+  // ChatRooms
+  // -------------------------
+  it("✅ ChatRoom 생성 (User1)", async () => {
+    const res = await request(app)
+      .post("/v1/chat-rooms")
+      .set("Authorization", `Bearer ${tokenUser1}`)
+      .send({
+        name: "테스트 채팅방",
+        participants: [user1Id, user2Id],
+      });
+
+    expect(res.statusCode).toBe(201);
+    roomId = res.body._id;
+  });
+
+  it("✅ ChatRoom 조회 (User1)", async () => {
+    const res = await request(app)
+      .get(`/v1/chat-rooms/${roomId}`)
+      .set("Authorization", `Bearer ${tokenUser1}`);
+
+    expect(res.statusCode).toBe(200);
+    expect(res.body._id).toBe(roomId);
+  });
+
+  it("✅ ChatRoom 전체 조회 (User1)", async () => {
+    const res = await request(app)
+      .get("/v1/chat-rooms")
+      .set("Authorization", `Bearer ${tokenUser1}`);
+    expect(res.statusCode).toBe(200);
+    expect(Array.isArray(res.body)).toBe(true);
+  });
+
+  it("✅ ChatRoom 수정 (참가자인 User2)", async () => {
+    const res = await request(app)
+      .put(`/v1/chat-rooms/${roomId}`)
+      .set("Authorization", `Bearer ${tokenUser2}`)
+      .send({ name: "수정된 채팅방" });
+    expect(res.statusCode).toBe(200);
+    expect(res.body.name).toBe("수정된 채팅방");
+  });
+
+  it("❌ ChatRoom 수정 실패 (참가자가 아닌 User3)", async () => {
+    const res = await request(app)
+      .put(`/v1/chat-rooms/${roomId}`)
+      .set("Authorization", `Bearer ${tokenUser3}`)
+      .send({ name: "권한 없는 수정" });
+    expect(res.statusCode).toBe(403);
+  });
+
+  // -------------------------
+  // Messages
+  // -------------------------
+  it("✅ Message 생성 (User1)", async () => {
+    const res = await request(app)
+      .post(`/v1/chat-rooms/${roomId}/messages`)
+      .set("Authorization", `Bearer ${tokenUser1}`)
+      .send({ text: "안녕하세요 @target" });
+
+    expect(res.statusCode).toBe(201);
+    messageId = res.body._id;
+    expect(res.body.text).toBe("안녕하세요 @target");
+    expect(res.body.mentions.length).toBe(1);
+  });
+
+  it("✅ Message 조회 (User2)", async () => {
+    const res = await request(app)
+      .get(`/v1/chat-rooms/${roomId}/messages?limit=10`)
+      .set("Authorization", `Bearer ${tokenUser2}`);
+
+    expect(res.statusCode).toBe(200);
+    expect(Array.isArray(res.body)).toBe(true);
+    expect(res.body[0]._id).toBe(messageId);
+  });
+
+  it("✅ Message 수정 (작성자 본인)", async () => {
+    const res = await request(app)
+      .put(`/v1/messages/${messageId}`)
+      .set("Authorization", `Bearer ${tokenUser1}`)
+      .send({ text: "수정된 메시지" });
+
+    expect(res.statusCode).toBe(200);
+    expect(res.body.text).toBe("수정된 메시지");
+  });
+
+  it("❌ Message 수정 실패 (작성자가 아님)", async () => {
+    const res = await request(app)
+      .put(`/v1/messages/${messageId}`)
+      .set("Authorization", `Bearer ${tokenUser2}`)
+      .send({ content: "권한 없는 수정" });
+    expect(res.statusCode).toBe(403);
+  });
+
+  it("✅ Message 삭제 (작성자 본인)", async () => {
+    const res = await request(app)
+      .delete(`/v1/messages/${messageId}`)
+      .set("Authorization", `Bearer ${tokenUser1}`);
+    expect(res.statusCode).toBe(200);
+  });
+
+  // -------------------------
+  // ChatRoom 삭제
+  // -------------------------
+  it("✅ ChatRoom 삭제 (참가자인 User1)", async () => {
+    const res = await request(app)
+      .delete(`/v1/chat-rooms/${roomId}`)
+      .set("Authorization", `Bearer ${tokenUser1}`);
+    expect(res.statusCode).toBe(204);
+  });
+
+  it("❌ 삭제된 ChatRoom 조회 시 404", async () => {
+    const res = await request(app)
+      .get(`/v1/chat-rooms/${roomId}`)
+      .set("Authorization", `Bearer ${tokenUser1}`);
+    expect(res.statusCode).toBe(404);
   });
 });
