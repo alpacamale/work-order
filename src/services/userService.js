@@ -3,10 +3,11 @@ import Post from "../models/Post.js";
 import AppError from "../utils/AppError.js";
 
 export const createUser = async ({ username, password, name, position }) => {
-  const user = await User.find({ username });
-  if (user) throw new AppError("Username already taken", 409);
-  const newuser = new User({ username, password, name, position });
-  return await newuser.save();
+  // 이미 username 존재하는지 체크
+  const existing = await User.findOne({ username });
+  if (existing) throw new AppError("Username already taken", 409);
+  const newUser = new User({ username, password, name, position });
+  return await newUser.save();
 };
 
 export const getUsers = async () => {
