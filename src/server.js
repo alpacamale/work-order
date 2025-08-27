@@ -9,8 +9,17 @@ import v1ChatRoomRouter from "./routers/v1/chatRoom";
 import v1MessageRouter from "./routers/v1/message";
 import { authMiddleware } from "./middleware/authMiddleware";
 import AppError from "./utils/AppError";
+import cors from "cors";
 
 const app = express();
+
+app.use(
+  cors({
+    origin: "*", // 프론트엔드 주소
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+    credentials: true,
+  })
+);
 
 // middleware
 app.use(morgan("dev")); // logger
@@ -27,6 +36,11 @@ app.use("/v1/posts", v1PostRouter);
 app.use("/v1/comments", v1CommentRouter);
 app.use("/v1/chat-rooms", v1ChatRoomRouter);
 app.use("/v1/messages", v1MessageRouter);
+
+// health check
+app.get("/health", (req, res) => {
+  res.json({ status: "ok" });
+});
 
 // error logging
 app.use((err, req, res, next) => {
