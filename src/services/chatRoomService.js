@@ -1,18 +1,37 @@
 import AppError from "../utils/AppError.js";
 import ChatRoom from "../models/ChatRoom";
+import mongoose from "mongoose";
 
 export const createRoom = async ({ id, name, participants }) => {
-  const _participants = new Set([id, ...(participants || [])]);
+  // id: 현재 로그인한 유저의 ObjectId string
+  const all = [id, ...(participants || [])];
 
+  // 1) 문자열 기준 중복 제거
+  const unique = [...new Set(all.map(String))];
+
+  // 2) 유효성 검사 + 변환
+  const objectIds = unique.map((id) => {
+    if (!mongoose.isValidObjectId(id)) {
+      throw new AppError(`Invalid participant id: ${id}`, 400);
+    }
+    return new mongoose.Types.ObjectId(id);
+  });
+
+  // 3) 생성
   const room = new ChatRoom({
     name,
-    participants: [..._participants],
+    participants: objectIds,
   });
 
   return await room.save();
 };
 
-export const getRooms = async ({ id }) => await ChatRoom.find({ id });
+export const getRooms = async ({ id }) => {
+  return await ChatRoom.find({ participants: id }).populate(
+    "participants",
+    "username name"
+  );
+};
 
 export const getRoom = async ({ id }) => {
   const room = await ChatRoom.findById(id).populate("participants", "username");
