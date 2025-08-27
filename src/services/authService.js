@@ -10,9 +10,6 @@ export const login = async ({ username, password }) => {
   const isMatch = await bcrypt.compare(password, user.password);
   if (!isMatch) throw new AppError("Password is not valid", 401);
 
-  if (!process.env.JWT_SECRET)
-    throw new AppError("환경변수가 설정되지 않았습니다", 503);
-
   const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
     expiresIn: "1h",
   });
