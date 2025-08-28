@@ -17,6 +17,7 @@ const postSchema = new Schema(
       enum: ["Urgent", "Priority", "Trivial", "Optional"],
       default: "Priority",
     },
+    attachments: [{ url: String, type: String }],
     content: { type: String }, // 내용
     date: { type: Date, default: Date.now }, // 날짜
     mentions: [{ type: Schema.Types.ObjectId, ref: "User" }], // 관계자 멘션

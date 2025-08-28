@@ -9,6 +9,7 @@ const commentSchema = new Schema(
     author: { type: Schema.Types.ObjectId, ref: "User", required: true }, // 댓글 작성자
     content: { type: String, required: true }, // 댓글 내용
     mentions: [{ type: Schema.Types.ObjectId, ref: "User" }], // 댓글 멘션
+    attachments: [{ url: String, type: String }],
   },
   { timestamps: true }
 );
