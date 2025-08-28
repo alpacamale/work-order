@@ -5,8 +5,9 @@ import v1UserRouter from "./routers/v1/users";
 import v1PostRouter from "./routers/v1/posts";
 import v1CommentRouter from "./routers/v1/comments";
 import v1AuthRouter from "./routers/v1/auth";
-import v1ChatRoomRouter from "./routers/v1/chatRoom";
-import v1MessageRouter from "./routers/v1/message";
+import v1ChatRoomRouter from "./routers/v1/chatRooms";
+import v1MessageRouter from "./routers/v1/messages";
+import v1UploadRouter from "./routers/v1/upload";
 import { authMiddleware } from "./middleware/authMiddleware";
 import AppError from "./utils/AppError";
 import cors from "cors";
@@ -36,6 +37,7 @@ app.use("/v1/posts", v1PostRouter);
 app.use("/v1/comments", v1CommentRouter);
 app.use("/v1/chat-rooms", v1ChatRoomRouter);
 app.use("/v1/messages", v1MessageRouter);
+app.use("/v1/upload", v1UploadRouter);
 
 // health check
 app.get("/health", (req, res) => {
